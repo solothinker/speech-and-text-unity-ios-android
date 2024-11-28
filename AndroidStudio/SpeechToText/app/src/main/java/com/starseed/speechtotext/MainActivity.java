@@ -27,6 +27,31 @@ public class MainActivity extends UnityPlayerActivity
         speech.setRecognitionListener(recognitionListener);
     }
     @Override
+    protected void onResume() {
+        super.onResume(); // Ensures UnityPlayerActivity's onResume is called
+        // Reinitialize or check TTS and SpeechRecognizer if necessary
+        if (speech == null) {
+            speech = SpeechRecognizer.createSpeechRecognizer(this);
+            speech.setRecognitionListener(recognitionListener);
+        }
+        if (tts == null) {
+            tts = new TextToSpeech(this, initListener);
+        }
+    }
+    @Override
+    protected void onPause() {
+        super.onPause(); // Ensures UnityPlayerActivity's onPause is called
+        // Stop speech recognizer and release resources if not needed in the background
+        if (speech != null) {
+            speech.stopListening();
+            speech.cancel(); // Cancels any ongoing recognition
+        }
+        // Optionally stop TTS if it’s speaking
+        if (tts != null && tts.isSpeaking()) {
+            tts.stop(); // Stops speaking
+        }
+    }
+    @Override
     public void onDestroy() {
         // Don't forget to shutdown tts!
         if (tts != null) {
