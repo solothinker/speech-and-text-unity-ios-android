@@ -21,7 +21,7 @@ public class Bridge {
         intent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_MINIMUM_LENGTH_MILLIS, Long.valueOf(5000));
         intent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, Long.valueOf(3000));
         intent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, Long.valueOf(3000));
-        if (!prompt.equals("")) intent.putExtra(RecognizerIntent.EXTRA_PROMPT, prompt);
+        if (!prompt.isEmpty()) intent.putExtra(RecognizerIntent.EXTRA_PROMPT, prompt);
         UnityPlayer.currentActivity.startActivityForResult(intent, RESULT_SPEECH);
     }
     public static void SettingSpeechToText(String language){
