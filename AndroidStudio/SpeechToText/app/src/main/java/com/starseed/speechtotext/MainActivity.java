@@ -7,11 +7,13 @@ import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.UtteranceProgressListener;
+import android.util.Log;
+
 import com.unity3d.player.UnityPlayer;
 import com.unity3d.player.UnityPlayerActivity;
+
 import java.util.ArrayList;
 import java.util.Locale;
-
 
 public class MainActivity extends UnityPlayerActivity
 {
@@ -40,10 +42,18 @@ public class MainActivity extends UnityPlayerActivity
     }
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
+        //super.onActivityResult(requestCode, resultCode, data);
         if (resultCode == RESULT_OK && null != data) {
-            ArrayList<String> text = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
-            UnityPlayer.UnitySendMessage("SpeechToText", "onResults", text.get(0));
+            try
+            {
+                ArrayList<String> text = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
+                assert text != null;
+                UnityPlayer.UnitySendMessage("SpeechToText", "onResults", text.get(0));
+            }
+            catch(NullPointerException e)
+            {
+                Log.i("SpeechToText", "NullPointerException from onActivityResult: " + e.getMessage());
+            }
         }
     }
 
@@ -53,33 +63,23 @@ public class MainActivity extends UnityPlayerActivity
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, Bridge.languageSpeech);
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, Bridge.languageSpeech);
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Bridge.languageSpeech);
+        intent.putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true);
         //intent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_MINIMUM_LENGTH_MILLIS, 2000);
         intent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, 2000);
         //intent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, 2000);
         intent.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, this.getPackageName());
         intent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 3);
 
-        this.runOnUiThread(new Runnable() {
-
-            @Override
-            public void run() {
-                speech.startListening(intent);
-            }
-        });
+        this.runOnUiThread(() -> speech.startListening(intent));
         UnityPlayer.UnitySendMessage("SpeechToText", "onMessage", "CallStart, Language:" + Bridge.languageSpeech);
     }
     public void OnStopRecording() {
-        this.runOnUiThread(new Runnable() {
-
-            @Override
-            public void run() {
-                speech.stopListening();
-            }
-        });
+        this.runOnUiThread(() -> speech.stopListening());
         UnityPlayer.UnitySendMessage("SpeechToText", "onMessage", "CallStop");
     }
 
-    RecognitionListener recognitionListener = new RecognitionListener() {
+     RecognitionListener recognitionListener = new RecognitionListener() {
+
         @Override
         public void onReadyForSpeech(Bundle params) {
             UnityPlayer.UnitySendMessage("SpeechToText", "onReadyForSpeech", params.toString());
@@ -89,8 +89,8 @@ public class MainActivity extends UnityPlayerActivity
             UnityPlayer.UnitySendMessage("SpeechToText", "onBeginningOfSpeech", "");
         }
         @Override
-        public void onRmsChanged(float rmsdB) {
-            UnityPlayer.UnitySendMessage("SpeechToText", "onRmsChanged", "" + rmsdB);
+        public void onRmsChanged(float roodB) {
+            UnityPlayer.UnitySendMessage("SpeechToText", "onRmsChanged", "" + roodB);
         }
         @Override
         public void onBufferReceived(byte[] buffer) {
@@ -106,13 +106,35 @@ public class MainActivity extends UnityPlayerActivity
         }
         @Override
         public void onResults(Bundle results) {
-            ArrayList<String> text = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
-            UnityPlayer.UnitySendMessage("SpeechToText", "onResults", text.get(0));
+            try
+            {
+                ArrayList<String> text = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
+                assert text != null;
+                UnityPlayer.UnitySendMessage("SpeechToText", "onResults", text.get(0));
+            }
+            catch (NullPointerException e)
+            {
+                Log.i("SpeechToText", "NullPointerException from onResults: " + e.getMessage());
+            }
+
+            UnityPlayer.UnitySendMessage("SpeechToText", "onResults", "");
         }
         @Override
         public void onPartialResults(Bundle partialResults) {
-            ArrayList<String> text = partialResults.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
-            UnityPlayer.UnitySendMessage("SpeechToText", "onPartialResults", text.get(0));
+            try
+            {
+                ArrayList<String> text = partialResults.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
+                assert text != null;
+                UnityPlayer.UnitySendMessage("SpeechToText", "onPartialResults", text.get(0));
+            }
+            catch(NullPointerException e)
+            {
+                Log.i("SpeechToText", "NullPointerException from onPartialResults: " + e.getMessage());
+            }
+            catch(IndexOutOfBoundsException i)
+            {
+                Log.i("SpeechToText", "IndexOutOfBoundsException from onPartialResults: " + i.getMessage());
+            }
         }
         @Override
         public void onEvent(int eventType, Bundle params) {
@@ -138,7 +160,7 @@ public class MainActivity extends UnityPlayerActivity
         tts.stop();
     }
 
-    TextToSpeech.OnInitListener initListener = new TextToSpeech.OnInitListener()
+     TextToSpeech.OnInitListener initListener = new TextToSpeech.OnInitListener()
     {
         @Override
         public void onInit(int status) {
